@@ -1,0 +1,60 @@
+TiddlyWeb CLI
+text-based client for TiddlyWeb
+
+USAGE
+    tweb [options] <command> <parameters>
+
+OPTIONS
+
+    -c <filename>
+        read settings from file
+
+    -h <host>
+
+    -u <username>
+
+    -p <password>
+
+COMMANDS
+
+    ls <type> [container]
+        list collection
+        type is the type of collection (bags/recipes/tiddlers)
+        if tiddlers, a container also has to be specified:
+            ls tiddlers <bag|recipe> <name>
+
+    cat <type> <name> [container]
+        view entity (bag/recipe/tiddler)
+        if bag or recipe, the name has to specified:
+            cat <bag|recipe> <name>
+        if tiddler, the container also has to specified:
+            cat tiddler <title> <bag|recipe> <name>
+
+    edit <type> <name> [container]
+        modify entity using $EDITOR
+        parameters are handled as with cat
+
+CONFIGURATION
+    An optional configuration file contains default values, one space-delimited
+    entry per line:
+        host http://localhost:8080
+        username foo
+        password bar
+
+    Option values take precedence over these default settings.
+
+    NB: There is currently no encryption of configuration values.
+
+EXAMPLES
+
+    tweb -h tiddlyspace.com -u foo -p bar ls bags
+        list bags on tiddlyspace.com as user foo
+
+    tweb -c ~/.twebrc -p foo ls recipes
+        list recipes on default host, using custom password
+
+    tweb -c ~/.twebrc cat recipe Omega
+        view recipe Omega
+
+    tweb -c ~/.twebrc edit tiddler Foo bag Alpha
+        modify tiddler Foo in bag Alpha

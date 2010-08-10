@@ -1,0 +1,222 @@
+#!/usr/bin/env sh
+
+# TiddlyWeb command-line interface
+# v0.5.0
+#
+# Usage:
+#   tweb [options] <command> <parameters>
+
+set -e
+
+ctype="text/plain"
+pager=${PAGER:-less}
+editor=${EDITOR:?}
+tmpfile="/tmp/tweb$$"
+
+die() {
+    echo "$*"
+    exit 1
+}
+
+# parse config options
+while getopts "c:h:u:p:" Option; do
+	case $Option in
+		"c" )
+			cfgfile=$OPTARG
+			shift
+			shift
+			;;
+		"h" )
+			host=$OPTARG
+			shift
+			shift
+			;;
+		"u" )
+			username=$OPTARG
+			shift
+			shift
+			;;
+		"p" )
+			password=$OPTARG
+			shift
+			shift
+			;;
+	esac
+done
+
+cmd=$1
+shift
+params=$@
+
+# processs settings
+
+parsecfg() {
+	while read key value; do
+		case $key in
+			"host" )
+				default_host=$value
+				;;
+			"username" )
+				default_username=$value
+				;;
+			"password" )
+				default_password=$value # TODO: decrypt
+				;;
+		esac
+	done
+}
+
+if [ -n "$cfgfile" ]; then
+	parsecfg < $cfgfile
+fi
+
+host=${host:-$default_host}
+username=${username:-$default_username}
+password=${password:-$default_password}
+
+if [ -z "$host" ]; then
+	die "ERROR: host not specified"
+fi
+
+#
+# commands
+#
+
+# list collection
+ls() {
+	type=$1
+	shift
+	case $type in
+		"bags" )
+			listbags
+			;;
+		"recipes" )
+			listrecipes
+			;;
+		"tiddlers" )
+			listtiddlers $@
+			;;
+		* )
+			die "ERROR: no such collection"
+			;;
+	esac
+}
+
+# view entity
+cat() {
+	type=$1
+	shift
+	case $type in
+		"bag" )
+			getbag $@
+			;;
+		"recipe" )
+			getrecipe $@
+			;;
+		"tiddler" )
+			gettiddler $@
+			;;
+		* )
+			die "ERROR: no such entity"
+			;;
+	esac
+}
+
+# modify entity
+edit() {
+	type=$1
+	shift
+	case $type in
+		"bag" )
+			putbag $@
+			;;
+		"recipe" )
+			putrecipe $@
+			;;
+		"tiddler" )
+			gettiddler $@ > $tmpfile
+			# TODO: capture ETag
+			$editor "$tmpfile" && \
+					command cat "$tmpfile" | puttiddler $@ && \
+					rm $tmpfile # TODO: detect errors in puttiddler/request
+			;;
+		* )
+			die "ERROR: no such entity"
+			;;
+	esac
+}
+
+#
+# utility functions
+#
+
+listbags() {
+	request GET /bags | view
+}
+
+listrecipes() {
+	request GET /recipes | view
+}
+
+listtiddlers() {
+	type=${1:?}
+	name=${2:?}
+	request GET "/${type}s/$name/tiddlers" | view
+}
+
+getbag() {
+	name=${1:?}
+	request GET "/bags/$name"
+}
+
+getrecipe() {
+	name=${1:?}
+	request GET "/recipes/$name"
+}
+
+gettiddler() {
+	title=${1:?}
+	type=${2:?}
+	name=${3:?}
+	request GET "/${type}s/$name/tiddlers/$title"
+}
+
+puttiddler() {
+	title=${1:?}
+	type=${2:?}
+	name=${3:?}
+	request PUT "/${type}s/$name/tiddlers/$title"
+}
+
+view() {
+	{ command cat -; echo; } | column | $pager
+}
+
+request() {
+	method=${1:?}
+	uri=${2:?}
+	uri="$host$uri"
+
+	opts="-s"
+	if [ -n "$username" ]; then
+		opts="$opts -u $username:$password"
+	fi
+
+	case $method in
+		"GET" )
+			curl $opts -X GET -H "Accept: $ctype" "$uri"
+			;;
+		"PUT" )
+			curl $opts -X PUT -H "Content-Type: $ctype" --data-binary @- "$uri"
+			;;
+		"DELETE" )
+			curl $opts -X DELETE "$uri"
+			;;
+		* )
+			die "ERROR: no such method"
+			;;
+	esac
+}
+
+# execute command
+$cmd $params
