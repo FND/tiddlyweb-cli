@@ -55,11 +55,18 @@ parsecfg() {
 			"password" )
 				default_password=$value # TODO: decrypt
 				;;
+			"bag" )
+				default_bag=$value
+				;;
+			"recipe" )
+				default_recipe=$value
+				;;
 		esac
 	done
 }
 
 if [ -n "$cfgfile" ]; then
+	# TODO: search in ~/.tiddlyweb
 	parsecfg < $cfgfile
 fi
 
@@ -152,25 +159,33 @@ listrecipes() {
 }
 
 listtiddlers() {
-	type=${1:?}
-	name=${2:?}
+	type=${1:-bag}
+	if [ "$type" = "bag" ]; then
+		name=${3:-$default_bag}
+	else
+		name=${3:-$default_recipe}
+	fi
 	request GET "/${type}s/$name/tiddlers" | view
 }
 
 getbag() {
-	name=${1:?}
+	name=${1:-$default_bag}
 	request GET "/bags/$name"
 }
 
 getrecipe() {
-	name=${1:?}
+	name=${1:-$default_recipe}
 	request GET "/recipes/$name"
 }
 
 gettiddler() {
 	title=${1:?}
-	type=${2:?}
-	name=${3:?}
+	type=${2:-bag}
+	if [ "$type" = "bag" ]; then
+		name=${3:-$default_bag}
+	else
+		name=${3:-$default_recipe}
+	fi
 	request GET "/${type}s/$name/tiddlers/$title"
 }
 
