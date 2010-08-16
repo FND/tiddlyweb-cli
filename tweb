@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 # TiddlyWeb command-line interface
-# v0.5.0
+# v0.5.1
 #
 # Usage:
 #   tweb [options] <command> <parameters>
@@ -19,32 +19,25 @@ die() {
 }
 
 # parse config options
-while getopts "c:h:u:p:" Option; do
-	case $Option in
+while getopts "c:h:u:p:" opt; do
+	case "$opt" in
 		"c" )
 			cfgfile=$OPTARG
-			shift
-			shift
 			;;
 		"h" )
 			host=$OPTARG
-			shift
-			shift
 			;;
 		"u" )
 			username=$OPTARG
-			shift
-			shift
 			;;
 		"p" )
 			password=$OPTARG
-			shift
-			shift
 			;;
 	esac
 done
+shift $(( $OPTIND - 1 ))
 
-cmd=$1
+cmd=${1:?}
 shift
 params=$@
 
