@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 # TiddlyWeb command-line interface
-# v0.5.1
+# v0.5.2
 #
 # Usage:
 #   tweb [options] <command> <parameters>
@@ -96,6 +96,9 @@ ls() {
 		"tiddlers" )
 			listtiddlers $@
 			;;
+		"recent" )
+			listtiddlers $@ "sort=-modified;limit=10" # TODO: configurable
+			;;
 		* )
 			die "ERROR: no such collection"
 			;;
@@ -165,7 +168,10 @@ listtiddlers() {
 	else
 		name=${2:-$default_recipe}
 	fi
-	request GET "/${type}s/$name/tiddlers" | view
+	if [ -n "$3" ]; then
+		filter="?$3"
+	fi
+	request GET "/${type}s/$name/tiddlers$filter" | view
 }
 
 getbag() {

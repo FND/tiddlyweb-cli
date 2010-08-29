@@ -19,9 +19,9 @@ COMMANDS
 
     ls <type> [container]
         list collection
-        type is the type of collection (bags/recipes/tiddlers)
-        if tiddlers, a container also has to be specified:
-            ls tiddlers <bag|recipe> <name>
+        type is the type of collection (bags/recipes/tiddlers or recent)
+        if tiddlers or recent, a container also has to be specified:
+            ls <tiddlers|recent> <bag|recipe> <name>
 
     cat <type> <name> [container]
         view entity (bag/recipe/tiddler)
@@ -40,6 +40,8 @@ CONFIGURATION
         host http://localhost:8080
         username foo
         password bar
+        bag Alpha
+        recipe Omega
 
     Option values take precedence over these default settings.
 
