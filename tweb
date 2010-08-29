@@ -161,9 +161,9 @@ listrecipes() {
 listtiddlers() {
 	type=${1:-bag}
 	if [ "$type" = "bag" ]; then
-		name=${3:-$default_bag}
+		name=${2:-$default_bag}
 	else
-		name=${3:-$default_recipe}
+		name=${2:-$default_recipe}
 	fi
 	request GET "/${type}s/$name/tiddlers" | view
 }
