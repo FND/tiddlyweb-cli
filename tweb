@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 # TiddlyWeb command-line interface
 # v0.5.2
@@ -39,7 +39,7 @@ shift $(( $OPTIND - 1 ))
 
 cmd=${1:?}
 shift
-params=$@
+params=("$@")
 
 # processs settings
 
@@ -94,10 +94,10 @@ ls() {
 			listrecipes
 			;;
 		"tiddlers" )
-			listtiddlers $@
+			listtiddlers "$@"
 			;;
 		"recent" )
-			listtiddlers $@ "sort=-modified;limit=10" # TODO: configurable
+			listtiddlers "$@" "sort=-modified;limit=10" # TODO: configurable
 			;;
 		* )
 			die "ERROR: no such collection"
@@ -111,13 +111,13 @@ cat() {
 	shift
 	case $type in
 		"bag" )
-			getbag $@
+			getbag "$@"
 			;;
 		"recipe" )
-			getrecipe $@
+			getrecipe "$@"
 			;;
 		"tiddler" )
-			gettiddler $@
+			gettiddler "$@"
 			;;
 		* )
 			die "ERROR: no such entity"
@@ -131,16 +131,16 @@ edit() {
 	shift
 	case $type in
 		"bag" )
-			putbag $@
+			putbag "$@"
 			;;
 		"recipe" )
-			putrecipe $@
+			putrecipe "$@"
 			;;
 		"tiddler" )
-			gettiddler $@ > $tmpfile
+			gettiddler "$@" > $tmpfile
 			# TODO: capture ETag
 			$editor "$tmpfile" && \
-					command cat "$tmpfile" | puttiddler $@ && \
+					command cat "$tmpfile" | puttiddler "$@" && \
 					rm $tmpfile # TODO: detect errors in puttiddler/request
 			;;
 		* )
@@ -209,7 +209,7 @@ view() {
 request() {
 	method=${1:?}
 	uri=${2:?}
-	uri="$host$uri"
+	uri=`echo "$host$uri" | sed -e "s/\ /%20/g"` # XXX: hacky
 
 	opts="-s"
 	if [ -n "$username" ]; then
@@ -233,4 +233,4 @@ request() {
 }
 
 # execute command
-$cmd $params
+$cmd "${params[@]}"
